@@ -1,20 +1,43 @@
-client = LIFX::Client.lan                  # Talk to bulbs on the LAN
-client.discover! do |c|                    # Discover lights. Blocks until a light with the label 'Office' is found
-  c.lights.with_label('Office')
+require 'bundler'
+Bundler.require
+
+
+morning = LIFX::Color.hsb(29, 1.0, 0.65)
+mid_morning = LIFX::Color.hsb(60, 0.2, 0.80)
+midday = LIFX::Color.hsb(250, 0.15, 1)
+mid_afternoon = LIFX::Color.hsb(60, 0.45, 0.75)
+dinner = LIFX::Color.hsb(40, 0.55, 0.55)
+night = LIFX::Color.hsb(30, 0.95, 0.30)
+
+
+label = ARGV.first
+
+lifx = LIFX::Client.lan
+lifx.discover!
+
+light = lifx.lights.first
+if label
+  light = lifx.lights.with_label(label)
 end
-                                           # Blocks for a default of 10 seconds or until a light is found
-client.lights.turn_on                      # Tell all lights to turn on
-light = client.lights.with_label('Office') # Get light with label 'Office'
 
-# Set the Office light to pale green over 5 seconds
-green = LIFX::Color.green(saturation: 0.5)
-light.set_color(green, duration: 5)        # Light#set_color is asynchronous
+now = Time.now
+puts 'Time : ' + now.inspect
 
-sleep 5                                    # Wait for light to finish changing
-light.set_label('My Office')
+if now.hour == 6
+  light.turn_on()
+  light.set_color(morning)
+elsif now.hour == 9
+  light.set_color(mid_morning)
+elsif now.hour == 12
+  light.set_color(midday)
+elsif now.hour == 15
+  light.set_color(mid_afternoon)
+elsif now.hour == 18
+  light.set_color(dinner)
+elsif now.hour >= 21
+  light.set_color(night)
+end
 
-light.add_tag('Offices')                   # Add tag to light
 
-client.lights.with_tag('Offices').turn_off
 
-client.flush                               # Wait until all the packets have been sent
+lifx.flush
